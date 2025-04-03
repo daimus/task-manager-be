@@ -9,9 +9,12 @@
 
 import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
+import AutoSwagger from 'adonis-autoswagger'
+import swagger from '#config/swagger'
 
 const AuthController = () => import('#controllers/auth_controller')
 const TasksController = () => import('#controllers/tasks_controller')
+const UsersController = () => import('#controllers/users_controller')
 
 router.get('/', async () => {
   return {
@@ -34,16 +37,7 @@ router
         // Users Routes
         router
           .group(() => {
-            router
-              .get('me', async ({ auth, response }) => {
-                try {
-                  const user = auth.getUserOrFail()
-                  return response.ok(user)
-                } catch (error) {
-                  return response.unauthorized({ error: 'User not found' })
-                }
-              })
-              .use(middleware.auth())
+            router.get('me', [UsersController, 'me']).use(middleware.auth())
           })
           .prefix('users')
         // Tasks Controller
@@ -61,3 +55,13 @@ router
       .prefix('v1')
   })
   .prefix('api')
+
+// returns swagger in YAML
+router.get('/api', async () => {
+  return AutoSwagger.default.docs(router.toJSON(), swagger)
+})
+
+// Renders Swagger-UI and passes YAML-output of /swagger
+router.get('/docs', async () => {
+  return AutoSwagger.default.ui('/api', swagger)
+})

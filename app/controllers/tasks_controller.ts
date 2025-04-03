@@ -1,66 +1,101 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import {inject} from "@adonisjs/core";
-import {TaskService} from "#services/task_service";
-import {createTaskValidator, updateTaskValidator} from "#validators/task";
-import logger from "@adonisjs/core/services/logger";
+import { inject } from '@adonisjs/core'
+import { TaskService } from '#services/task_service'
+import { createTaskValidator, updateTaskValidator } from '#validators/task'
+import logger from '@adonisjs/core/services/logger'
 
 @inject()
 export default class TasksController {
   constructor(private taskService: TaskService) {}
 
-  async index({auth, response}: HttpContext) {
+  /**
+   * @index
+   * @description Get all task of current user
+   * @responseBody 200 - <Task[]>
+   * @responseBody 401 - {"errors": [{"message": "string"}]}
+   */
+  async index({ auth, response }: HttpContext) {
     logger.info('GET /api/v1/tasks')
     const tasks = await this.taskService.getTasks({
-      userId: auth.user.id
+      userId: auth.user.id,
     });
-    return response.json(tasks);
+    return response.json(tasks)
   }
 
+  /**
+   * @store
+   * @description Create new task
+   * @responseBody 200 - <Task>
+   * @responseBody 401 - {"errors": [{"message": "string"}]}
+   */
   async store({ auth, request, response }: HttpContext) {
     logger.info('POST /api/v1/tasks')
     const payload = await request.validateUsing(createTaskValidator)
-    const user = auth.user;
+    const user = auth.user
     const task = await this.taskService.createTask({ ...payload, user_id: user.id });
-    return response.json(task);
+    return response.json(task)
   }
 
+  /**
+   * @show
+   * @description Show task by id
+   * @responseBody 200 - <Task>
+   * @responseBody 400 - {"message": "string"}
+   * @responseBody 401 - {"errors": [{"message": "string"}]}
+   */
   async show({ auth, request, response }: HttpContext) {
     const taskId = request.param('id')
     logger.info('GET /api/v1/tasks/%s', taskId)
     const task = await this.taskService.getTask({
       id: taskId,
-      userId: auth.user.id
-    });
+      userId: auth.user.id,
+    })
     if (!task) {
       return response.status(404).json({ message: "Task not found" });
     }
-    return response.json(task);
+    return response.json(task)
   }
 
+  /**
+   * @update
+   * @description Update task by id
+   * @responseBody 200 - <Task>
+   * @responseBody 400 - {"message": "string"}
+   * @responseBody 401 - {"errors": [{"message": "string"}]}
+   */
   async update({ auth, params, request, response }: HttpContext) {
     const taskId = request.param('id')
     logger.info('GET /api/v1/tasks/%s', taskId)
     const payload = await request.validateUsing(updateTaskValidator)
     const task = await this.taskService.updateTask({
-      id: taskId,
-      userId: auth.user.id
-    }, payload);
+        id: taskId,
+        userId: auth.user.id,
+      },
+      payload
+    )
     if (!task) {
       return response.status(404).json({ message: "Task not found" });
     }
-    return response.json(task);
+    return response.json(task)
   }
 
+  /**
+   * @destroy
+   * @description Delete task by id
+   * @responseBody 204 - No Content
+   * @responseBody 400 - {"message": "string"}
+   * @responseBody 401 - {"errors": [{"message": "string"}]}
+   */
   async destroy({ auth, request, response }: HttpContext) {
     const taskId = request.param('id')
     logger.info('GET /api/v1/tasks/%s', taskId)
     const task = await this.taskService.deleteTask({
       id: taskId,
-      userId: auth.user.id
-    });
+      userId: auth.user.id,
+    })
     if (!task) {
       return response.status(404).json({ message: "Task not found" });
     }
-    return response.status(204);
+    return response.status(204)
   }
 }
