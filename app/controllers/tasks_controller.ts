@@ -27,6 +27,7 @@ export default class TasksController {
    * @description Create new task
    * @responseBody 200 - <Task>
    * @responseBody 401 - {"errors": [{"message": "string"}]}
+   * @responseBody 422 - {"errors": [{"message": "string", "rule": "string", "field": "string"}]}
    */
   async store({ auth, request, response }: HttpContext) {
     logger.info('POST /api/v1/tasks')
@@ -40,7 +41,7 @@ export default class TasksController {
    * @show
    * @description Show task by id
    * @responseBody 200 - <Task>
-   * @responseBody 400 - {"message": "string"}
+   * @responseBody 404 - {"errors": [{"message": "string"}]}
    * @responseBody 401 - {"errors": [{"message": "string"}]}
    */
   async show({ auth, request, response }: HttpContext) {
@@ -51,7 +52,11 @@ export default class TasksController {
       userId: auth.user.id,
     })
     if (!task) {
-      return response.status(404).json({ message: "Task not found" });
+      return response.notFound({
+        errors: [{
+          message: 'Task not found'
+        }]
+      });
     }
     return response.json(task)
   }
@@ -60,8 +65,9 @@ export default class TasksController {
    * @update
    * @description Update task by id
    * @responseBody 200 - <Task>
-   * @responseBody 400 - {"message": "string"}
+   * @responseBody 404 - {"errors": [{"message": "string"}]}
    * @responseBody 401 - {"errors": [{"message": "string"}]}
+   * @responseBody 422 - {"errors": [{"message": "string", "rule": "string", "field": "string"}]}
    */
   async update({ auth, params, request, response }: HttpContext) {
     const taskId = request.param('id')
@@ -74,7 +80,11 @@ export default class TasksController {
       payload
     )
     if (!task) {
-      return response.status(404).json({ message: "Task not found" });
+      return response.notFound({
+        errors: [{
+          message: 'Task not found'
+        }]
+      });
     }
     return response.json(task)
   }
@@ -83,7 +93,7 @@ export default class TasksController {
    * @destroy
    * @description Delete task by id
    * @responseBody 204 - No Content
-   * @responseBody 400 - {"message": "string"}
+   * @responseBody 400 - {"errors": [{"message": "string"}]}
    * @responseBody 401 - {"errors": [{"message": "string"}]}
    */
   async destroy({ auth, request, response }: HttpContext) {
@@ -94,7 +104,11 @@ export default class TasksController {
       userId: auth.user.id,
     })
     if (!task) {
-      return response.status(404).json({ message: "Task not found" });
+      return response.notFound({
+        errors: [{
+          message: 'Task not found'
+        }]
+      });
     }
     return response.status(204)
   }

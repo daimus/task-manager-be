@@ -14,6 +14,7 @@ export default class AuthController {
    * @description Register a new user
    * @requestBody {"fullName": "John Doe", "email": "johndoe@mail.com", "password": "password"}
    * @responseBody 201 - <User>
+   * @responseBody 422 - {"errors": [{"message": "string", "rule": "string", "field": "string"}]}
    */
   async register({ request, response }: HttpContext) {
     logger.info('POST /api/v1/auth/register')
@@ -47,7 +48,7 @@ export default class AuthController {
    * @logout
    * @description Logout from account
    * @responseBody 200 - {"message": "string"}
-   * @responseBody 400 - {"message": "string"}
+   * @responseBody 400 - {"errors": [{"message": "string"}]}
    * @responseBody 401 - {"errors": [{"message": "string"}]}
    */
   async logout({ auth, response }: HttpContext) {
@@ -55,7 +56,11 @@ export default class AuthController {
     const user = auth.getUserOrFail()
     const token = auth.user?.currentAccessToken.identifier
     if (!token) {
-      return response.badRequest({ message: 'Token not found' })
+      return response.badRequest({
+        errors: [{
+          message: 'Invalid token'
+        }]
+      })
     }
     await User.accessTokens.delete(user, token)
     return response.ok({ message: 'Logged out' })
