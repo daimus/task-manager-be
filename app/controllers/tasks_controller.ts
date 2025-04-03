@@ -16,15 +16,26 @@ export default class TasksController {
    */
   async index({ auth, response }: HttpContext) {
     logger.info('GET /api/v1/tasks')
+    const userId = auth?.user?.id
+    if (!userId) {
+      return response.unauthorized({
+        errors: [
+          {
+            message: 'Unauthorized',
+          },
+        ],
+      })
+    }
     const tasks = await this.taskService.getTasks({
-      userId: auth.user.id,
-    });
+      userId: userId,
+    })
     return response.json(tasks)
   }
 
   /**
    * @store
    * @description Create new task
+   * @requestBody {"name": "Activity", "completed": false}
    * @responseBody 200 - <Task>
    * @responseBody 401 - {"errors": [{"message": "string"}]}
    * @responseBody 422 - {"errors": [{"message": "string", "rule": "string", "field": "string"}]}
@@ -32,8 +43,17 @@ export default class TasksController {
   async store({ auth, request, response }: HttpContext) {
     logger.info('POST /api/v1/tasks')
     const payload = await request.validateUsing(createTaskValidator)
-    const user = auth.user
-    const task = await this.taskService.createTask({ ...payload, user_id: user.id });
+    const userId = auth?.user?.id
+    if (!userId) {
+      return response.unauthorized({
+        errors: [
+          {
+            message: 'Unauthorized',
+          },
+        ],
+      })
+    }
+    const task = await this.taskService.createTask({ ...payload, userId: userId })
     return response.json(task)
   }
 
@@ -47,16 +67,28 @@ export default class TasksController {
   async show({ auth, request, response }: HttpContext) {
     const taskId = request.param('id')
     logger.info('GET /api/v1/tasks/%s', taskId)
+    const userId = auth?.user?.id
+    if (!userId) {
+      return response.unauthorized({
+        errors: [
+          {
+            message: 'Unauthorized',
+          },
+        ],
+      })
+    }
     const task = await this.taskService.getTask({
       id: taskId,
-      userId: auth.user.id,
+      userId: userId,
     })
     if (!task) {
       return response.notFound({
-        errors: [{
-          message: 'Task not found'
-        }]
-      });
+        errors: [
+          {
+            message: 'Task not found',
+          },
+        ],
+      })
     }
     return response.json(task)
   }
@@ -64,27 +96,40 @@ export default class TasksController {
   /**
    * @update
    * @description Update task by id
+   * @requestBody {"name": "Activity", "completed": false}
    * @responseBody 200 - <Task>
    * @responseBody 404 - {"errors": [{"message": "string"}]}
    * @responseBody 401 - {"errors": [{"message": "string"}]}
    * @responseBody 422 - {"errors": [{"message": "string", "rule": "string", "field": "string"}]}
    */
-  async update({ auth, params, request, response }: HttpContext) {
+  async update({ auth, request, response }: HttpContext) {
     const taskId = request.param('id')
     logger.info('GET /api/v1/tasks/%s', taskId)
     const payload = await request.validateUsing(updateTaskValidator)
+    const userId = auth?.user?.id
+    if (!userId) {
+      return response.unauthorized({
+        errors: [
+          {
+            message: 'Unauthorized',
+          },
+        ],
+      })
+    }
     const task = await this.taskService.updateTask({
         id: taskId,
-        userId: auth.user.id,
+        userId: userId,
       },
       payload
     )
     if (!task) {
       return response.notFound({
-        errors: [{
-          message: 'Task not found'
-        }]
-      });
+        errors: [
+          {
+            message: 'Task not found',
+          },
+        ],
+      })
     }
     return response.json(task)
   }
@@ -99,16 +144,28 @@ export default class TasksController {
   async destroy({ auth, request, response }: HttpContext) {
     const taskId = request.param('id')
     logger.info('GET /api/v1/tasks/%s', taskId)
+    const userId = auth?.user?.id
+    if (!userId) {
+      return response.unauthorized({
+        errors: [
+          {
+            message: 'Unauthorized',
+          },
+        ],
+      })
+    }
     const task = await this.taskService.deleteTask({
       id: taskId,
-      userId: auth.user.id,
+      userId: userId,
     })
     if (!task) {
       return response.notFound({
-        errors: [{
-          message: 'Task not found'
-        }]
-      });
+        errors: [
+          {
+            message: 'Task not found',
+          },
+        ],
+      })
     }
     return response.status(204)
   }
