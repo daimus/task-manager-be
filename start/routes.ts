@@ -11,6 +11,7 @@ import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
 
 const AuthController = () => import('#controllers/auth_controller')
+const TasksController = () => import('#controllers/tasks_controller')
 
 router.get('/', async () => {
   return {
@@ -45,6 +46,17 @@ router
               .use(middleware.auth())
           })
           .prefix('users')
+        // Tasks Controller
+        router
+          .group(() => {
+            router.get('/', [TasksController, 'index'])
+            router.get('/:id', [TasksController, 'show'])
+            router.post('/', [TasksController, 'store'])
+            router.patch('/:id', [TasksController, 'update'])
+            router.delete('/:id', [TasksController, 'destroy'])
+          })
+          .use(middleware.auth())
+          .prefix('tasks')
       })
       .prefix('v1')
   })
