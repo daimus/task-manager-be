@@ -4,7 +4,7 @@ import Task from "#models/task";
 export class TaskService {
   public async getTasks(filter: Partial<Task>) {
     logger.info('TASK_SERVICE/getTasks filter: %j', filter)
-    return await Task.findManyBy(filter)
+    return await Task.query().where(filter).orderBy('completed', 'asc').orderBy('created_at', 'desc')
   }
 
   public async getTask(filter: Partial<Task>) {
